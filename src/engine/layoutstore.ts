@@ -41,10 +41,10 @@ class LayoutStore {
     return null;
   }
 
-  public setSplit(srf: ISurface, splitStr: "vertical" | "horizontal", targetWindowID?: string): void {
+  public setSplit(srf: ISurface, splitStr: "vertical" | "horizontal", splitTargetWindowID?: string): void {
     const layout = this.getCurrentLayout(srf);
     if (layout instanceof BinaryTreeLayout) {
-      layout.setNextSplit(splitStr, targetWindowID);
+      layout.setNextSplit(splitStr, splitTargetWindowID);
     }
   }
 
