@@ -2,14 +2,21 @@
 
 A dynamic tiling extension for KWin 6 only.
 
-Krohnkite-i3 is a fork that specifically implements i3 style tiling
-to the KDE plasma desktop environment
+Krohnkite-i3 is a fork of [Kröhnkite](https://codeberg.org/anametologin/Krohnkite) that specifically implements i3 style tiling
+to the KDE plasma desktop environment.
 
 ![screenshot](./img/output.gif)
+
+The main motivation for this fork came from the fact that there was no other tiler which could provide i3 style tiling inside of KDE Plasma other than just hacking out kwin and replacing it with i3 under X11 sessions which broke a lot of window management features. 
+
+Krohnkite by [anametologin](https://codeberg.org/anametologin) did come close, however it only supported layouts of other tiling window managers (dwm, bspwm). The reason why I went out of my way to delete a lot of other layouts by krohnkite was to make it easier for me to navigate through the project and built up on it. 
+
+If you require the other layouts, then it would be better to revert back to anametologin's Krohnkite.
 
 ## Features
 
 - [x] i3 style splitting (vertical and horizontal)
+- [ ] Window Shifting/Movement
 - [ ] Nested container tree
 - [ ] alternative layouts
   - [ ] stack
@@ -103,40 +110,13 @@ go-task uninstall
 1. to found window's className,resourcename or caption see [readme](https://github.com/anametologin/krohnkite#search-a-window-parameters-to-filter-float-etc)
 2. you can use the name of class in square brackets: `[myNamE]` will float or ignore all windows with class or resource names such: 'myname1', 'Myname2', 'Notmyname555' etc...
 
-### Choose layout for screen by default
-
-1. Open Krohnkite options: ![options](img/conf.png)
-2. Tab `Rules->Screen default layout`. Layout configuration has format `OutputName:ActivityId:VirtualDesktopName:layoutName` multi monitor example: `HDMI-A-1:99a12h44-e9a6-1142-55eedaa7-3a922a15ab08::columns,DP-2:spread,DP-3:Desktop 3:tile,:threecolumn` - result will be:
-
-- set `columns` layout as default on monitor `HDMI-A-1`, only on activity with id:`99a12h44-e9a6-1142-55eedaa7-3a922a15ab08`, every Virtual Desktops on this activity.(if you specify `activity id` you have to to specify virtual desktop name or leave it blank)
-- set `spreadlayout` layout as default on monitor `DP-2`, every Activities, every Virtual Desktops;
-- set `tilelayout` layout as default on monitor `DP-3`, on every activity, only on virtual desktop with name `Desktop 3`
-- set `threecolumnlayout` layout as default on all monitors,all activities and all Virtual Desktops not covered by the previous rules
-
-2. How to find `outputName`, `activityId`, `VirtualDesktopName`, `layoutName`:
-   Right after system boot run KSystemLog
-
-- Push ignore button
-- Type in filter string: `krohnkite`
-- Right after `KROHNKITE: starting the script` string you will see one if you have one monitor or multiple lines: Screen(output):`Screen Name`,Desktop(name):`Virtual Desktop Name`,Activity:`Activity Id`,layouts: `numbered layouts` (the case doesn't matter,`layout` ending can be omitted): `tilelayout`, `monoclelayout`, `columns`, `threecolumnlayout,` `spreadlayout`, `stairlayout`, `spirallayout`, `stackedlayout`, `floatinglayout`, `btreelayout`
-
-3. `Apply` -> `reboot`
-
-### Search a window parameters to filter, float etc
-
-1. Krohnkite options: ![options](img/conf.png)
-2. Options->Debug new Windows
-3. Reboot
-4. Run KSystemLog
-5. Push `Ignore` button
-6. Type in filter string: `krohnkite`
-7. All created windows krohnkite working with will be there.
-8. Every debug entry contains parameters except those that are false and empty.
-
 ## Default Key Bindings
 
 | Key              | Action             |
 | ---------------- | ------------------ |
+| Meta + C         | Split Horizontally |
+| Meta + V         | Split Vertically   |
+|                  |                    |
 | Meta + .         | Focus Next         |
 | Meta + ,         | Focus Previous     |
 |                  |                    |
@@ -158,11 +138,6 @@ go-task uninstall
 |                  |                    |
 | Meta + Return    | Set as Master      |
 |                  |                    |
-| Meta + T         | Use Tile Layout    |
-| Meta + M         | Use Monocle Layout |
-| _unbound_        | Use Spread Layout  |
-| _unbound_        | Use Stair Layout   |
-| _unbound_        | Use Cascade Layout |
 
 ## Tips
 
