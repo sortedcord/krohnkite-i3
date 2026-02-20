@@ -41,10 +41,13 @@ class LayoutStore {
     return null;
   }
 
-  public setSplit(srf: ISurface, splitStr: "vertical" | "horizontal"): void {
+  public setSplit(ctx: IDriverContext, srf: ISurface, splitStr: "vertical" | "horizontal"): void {
     const layout = this.getCurrentLayout(srf);
     if (layout instanceof BinaryTreeLayout) {
-      layout.setNextSplit(splitStr);
+      if (layout.setNextSplit(splitStr)) {
+        const str = splitStr.charAt(0).toUpperCase() + splitStr.slice(1);
+        ctx.showNotification(`Split ${str}`);
+      }
     }
   }
 

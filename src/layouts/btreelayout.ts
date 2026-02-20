@@ -57,8 +57,12 @@ class BinaryTreeLayout implements ILayout {
   constructor() {
   }
 
-  public setNextSplit(split: "horizontal" | "vertical"): void {
+  public setNextSplit(split: "horizontal" | "vertical"): boolean {
+    if (this.nextSplit === split) {
+      return false;
+    }
     this.nextSplit = split;
+    return true;
   }
 
   public apply(

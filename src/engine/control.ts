@@ -222,12 +222,12 @@ class TilingController {
 
       case Shortcut.SplitVertical:
         if (ctx.currentWindow) {
-          this.engine.layouts.setSplit(ctx.currentSurface, "vertical");
+          this.engine.layouts.setSplit(ctx, ctx.currentSurface, "vertical");
         }
         break;
       case Shortcut.SplitHorizontal:
         if (ctx.currentWindow) {
-          this.engine.layouts.setSplit(ctx.currentSurface, "horizontal");
+          this.engine.layouts.setSplit(ctx, ctx.currentSurface, "horizontal");
         }
         break;
 
