@@ -52,12 +52,14 @@ class BinaryTreeLayout implements ILayout {
 
   private root: TreeNode | null = null;
   private nextSplit: "horizontal" | "vertical" | null = null;
+  private splitTargetWindowID: string | null = null;
 
   constructor() {
   }
 
-  public setNextSplit(split: "horizontal" | "vertical"): void {
+  public setNextSplit(split: "horizontal" | "vertical", targetWindowID?: string): void {
     this.nextSplit = split;
+    this.splitTargetWindowID = targetWindowID || null;
   }
 
   public apply(
@@ -185,9 +187,14 @@ class BinaryTreeLayout implements ILayout {
     // If nextSplit is set, we need to create a new container around the targetNode with that split.
     // If nextSplit is NOT set, we just add as sibling to current container.
 
-    const parent = targetNode.parent;
-
     if (this.nextSplit) {
+      const splitTargetNode = this.splitTargetWindowID
+        ? this.findNode(this.root, this.splitTargetWindowID)
+        : null;
+      if (splitTargetNode) {
+        targetNode = splitTargetNode;
+      }
+      const parent = targetNode.parent;
       // User requested a split direction for the NEXT window.
       // Wrap targetNode in a new container of type nextSplit.
       const newContainer = new TreeNode();
@@ -204,9 +211,11 @@ class BinaryTreeLayout implements ILayout {
       newContainer.addChild(newNode);
 
       this.nextSplit = null; // Reset after usage
+      this.splitTargetWindowID = null;
       return;
     }
 
+    const parent = targetNode.parent;
     if (parent) {
       // Add as sibling
       const index = parent.children.indexOf(targetNode);
