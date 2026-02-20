@@ -56,18 +56,6 @@ Item {
         sequence: "Meta+L";
     }
 
-    function getToggleDock() {
-        return toggleDock;
-    }
-    ShortcutHandler {
-        id: toggleDock;
-
-        name: "KrohnkitetoggleDock";
-        text: "Krohnkite: Toggle Dock";
-        sequence: "";
-    }
-
-
     function getFocusDown() {
         return focusDown;
     }
@@ -167,26 +155,6 @@ Item {
         name: "KrohnkitegrowWidth";
         text: "Krohnkite: Grow Width";
         sequence: "Meta+Ctrl+L";
-    }
-    function getIncrease() {
-        return increase;
-    }
-    ShortcutHandler {
-        id: increase;
-
-        name: "KrohnkiteIncrease";
-        text: "Krohnkite: Increase";
-        sequence: "Meta+I";
-    }
-    function getDecrease() {
-        return decrease;
-    }
-    ShortcutHandler {
-        id: decrease;
-
-        name: "KrohnkiteDecrease";
-        text: "Krohnkite: Decrease";
-        sequence: "Meta+D";
     }
     function getToggleFloat() {
         return toggleFloat;
