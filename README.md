@@ -5,7 +5,7 @@ A dynamic tiling extension for KWin 6 only.
 Krohnkite-i3 is a fork that specifically implements i3 style tiling
 to the KDE plasma desktop environment
 
-<video src="./img/demo.mp4"></video>
+![screenshot](./img/output.gif)
 
 ## Features
 
@@ -14,7 +14,6 @@ to the KDE plasma desktop environment
 - [ ] alternative layouts
   - [ ] stack
   - [ ] tabbed
-
 
 ## Development Requirement
 
