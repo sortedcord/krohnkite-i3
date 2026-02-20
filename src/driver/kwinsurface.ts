@@ -94,20 +94,7 @@ class KWinSurfaceStore implements ISurfaceStore {
     });
   }
   private static getSurfacesUserCfg(): SurfaceCfg<ISurfaceCfg>[] {
-    let userCfg: SurfaceCfg<ISurfaceCfg>[] = [];
-    getSurfacesCfg(CONFIG.surfacesDefaultConfig).forEach((srf) => {
-      let validatedCfg = KWinSurfaceStore.validateUserCfg(srf.unvalidatedCfg);
-      userCfg.push(
-        new SurfaceCfg<ISurfaceCfg>(
-          srf.outputName,
-          srf.activityId,
-          srf.vDesktopName,
-          validatedCfg,
-        ),
-      );
-    });
-
-    return userCfg;
+    return [];
   }
   private static validateUserCfg(rawCfg: string[]): ISurfaceCfg {
     let errors: string[] = [];
@@ -175,14 +162,7 @@ class KWinSurface implements ISurface {
     vDesktop: VirtualDesktop,
     isLayoutId: boolean = false,
   ): string {
-    let path = output.name;
-    if (isLayoutId) {
-      if (KWINCONFIG.layoutPerActivity) path += "@" + activity;
-      if (KWINCONFIG.layoutPerDesktop) path += "#" + vDesktop.id;
-    } else {
-      path += "@" + activity;
-      path += "#" + vDesktop.id;
-    }
+    let path = output.name + "@" + activity + "#" + vDesktop.id;
     return KWinSurface.getHash(path);
   }
 
@@ -224,10 +204,7 @@ class KWinSurface implements ISurface {
   ) {
     this.id = KWinSurface.generateId(output, activity, vDesktop);
     this.layoutId = KWinSurface.generateId(output, activity, vDesktop, true);
-    this.ignore =
-      KWINCONFIG.ignoreActivity.indexOf(activity) >= 0 ||
-      KWINCONFIG.ignoreScreen.indexOf(output.name) >= 0 ||
-      KWINCONFIG.ignoreVDesktop.indexOf(vDesktop.name) >= 0;
+    this.ignore = false;
 
     this.output = output;
     this.activity = activity;

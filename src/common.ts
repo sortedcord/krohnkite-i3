@@ -36,7 +36,6 @@ const WindowState = {
   TiledAfloat: 7,
   Undecided: 8,
   Dragging: 9,
-  Docked: 10,
 };
 type WindowState = (typeof WindowState)[keyof typeof WindowState];
 const WindowStateKeys = Object.keys(WindowState);
@@ -70,39 +69,31 @@ const Shortcut = {
   ShrinkWidth: "ShrinkWidth",
   ShrinkHeight: "ShrinkHeight",
 
-  Increase: "Increase",
-  Decrease: "Decrease",
-  ShiftIncrease: "ShiftIncrease", //NOTE: unused shortcut
-  ShiftDecrease: "ShiftDecrease", //NOTE: unused shortcut
+  Increase: "Increase", // Used for gaps?
+  Decrease: "Decrease", // Used for gaps?
 
   ToggleFloat: "ToggleFloat",
-  ToggleFloatAll: "ToggleFloatAll",
-  SetMaster: "SetMaster",
-  NextLayout: "NextLayout",
-  PreviousLayout: "PreviousLayout",
-  SetLayout: "SetLayout",
+  // ToggleFloatAll: "ToggleFloatAll", // Removed
+  // SetMaster: "SetMaster", // Removed
+  // NextLayout: "NextLayout", // Removed
+  // PreviousLayout: "PreviousLayout", // Removed
+  // SetLayout: "SetLayout", // Removed
 
-  Rotate: "Rotate",
-  RotatePart: "RotatePart",
+  // Rotate: "Rotate", // Removed
+  // RotatePart: "RotatePart", // Removed
 
-  ToggleDock: "ToggleDock",
+  // ToggleDock: "ToggleDock", // Removed
 
-  RaiseSurfaceCapacity: "RaiseSurfaceCapacity",
-  LowerSurfaceCapacity: "LowerSurfaceCapacity",
+  // RaiseSurfaceCapacity: "RaiseSurfaceCapacity", // Removed
+  // LowerSurfaceCapacity: "LowerSurfaceCapacity", // Removed
 
-  KrohnkiteMeta: "KrohnkiteMeta",
+  // KrohnkiteMeta: "KrohnkiteMeta", // Removed meta mode
 
-  MetaResetSurfaceCapacity: "MetaResetSurfaceCapacity",
-  MetaFocusLeft: "MetaFocusLeft",
-  MetaFocusRight: "MetaFocusRight",
-  MetaFocusUp: "MetaFocusUp",
-  MetaFocusDown: "MetaFocusDown",
+  /* Meta shortcuts removed for minimal build */
 } as const;
 type Shortcut = (typeof Shortcut)[keyof typeof Shortcut];
 
 interface IShortcuts {
-  getToggleDock(): ShortcutHandler;
-
   getFocusNext(): ShortcutHandler;
   getFocusPrev(): ShortcutHandler;
 
@@ -125,33 +116,8 @@ interface IShortcuts {
   getDecrease(): ShortcutHandler;
 
   getToggleFloat(): ShortcutHandler;
-  getFloatAll(): ShortcutHandler;
-  getNextLayout(): ShortcutHandler;
-  getPreviousLayout(): ShortcutHandler;
-
-  getRotate(): ShortcutHandler;
-  getRotatePart(): ShortcutHandler;
-
-  getSetMaster(): ShortcutHandler;
-
-  getTileLayout(): ShortcutHandler;
-  getMonocleLayout(): ShortcutHandler;
-  getThreeColumnLayout(): ShortcutHandler;
-  getSpreadLayout(): ShortcutHandler;
-  getStairLayout(): ShortcutHandler;
-  getFloatingLayout(): ShortcutHandler;
-  getQuarterLayout(): ShortcutHandler;
-  getStackedLayout(): ShortcutHandler;
-  getColumnsLayout(): ShortcutHandler;
-  getSpiralLayout(): ShortcutHandler;
-  getBTreeLayout(): ShortcutHandler;
-  getCascadeLayout(): ShortcutHandler;
-
-  getRaiseSurfaceCapacity(): ShortcutHandler;
-  getLowerSurfaceCapacity(): ShortcutHandler;
-
-  getKrohnkiteMeta(): ShortcutHandler;
 }
+
 
 interface IDBusQml {
   getDBusExists(): DBusCall;
@@ -163,50 +129,26 @@ interface IDBus {
   moveMouseToCenter(timeout?: number): void;
 }
 
+const enum WinTypes {
+  tiled = 1,
+  docked = 2,
+  float = 4,
+  surfaces = 8,
+  special = 16,
+}
+
 interface IConfig {
-  //Layouts
-  tileLayoutInitialAngle: string;
-  monocleMaximize: boolean;
-  monocleMinimizeRest: boolean;
-  quarterLayoutReset: boolean;
-  columnsLayoutInitialAngle: string;
-  columnsBalanced: boolean;
-  columnsLayerConf: string[];
-  stairReverse: boolean;
-  layoutOrder: string[];
-  layoutFactories: { [key: string]: () => ILayout };
-
-  //Surfaces
-  surfacesDefaultConfig: string[];
-  surfacesIsMoveWindows: boolean;
-  surfacesIsMoveOldestWindows: boolean;
-
   //Geometry
   screenGapTop: number;
   screenGapLeft: number;
   screenGapBetween: number;
   screenGapRight: number;
   screenGapBottom: number;
-  gapsOverrideConfig: string[];
-  limitTileWidthRatio: number;
+  gapsOverrideConfig: string[]; // Keep for per-monitor gaps
 
   //Behavior
-  adjustLayout: boolean;
-  adjustLayoutLive: boolean;
-  directionalKeyMode: "dwm" | "focus";
-  focusNormalCfg: WinTypes;
-  focusNormalDisableScreens: boolean;
-  focusNormalDisableVDesktops: boolean;
   movePointerOnFocus: boolean;
-  focusMetaCfg: WinTypes;
-  focusMetaDisableScreens: boolean;
-  focusMetaDisableVDesktops: boolean;
-  defaultMetaConfig: { [key: string]: Shortcut };
-  metaConf: string[];
-  metaTimeout: number;
-  metaIsToggle: boolean;
-  metaIsPushedTwice: boolean;
-  newWindowPosition: number;
+  defaultSplitOrientation: "horizontal" | "vertical";
 
   //Rules
   ignoreClass: string[];
@@ -218,54 +160,17 @@ interface IConfig {
   floatDefault: boolean;
   floatUtility: boolean;
 
-  ignoreActivity: string[];
-  ignoreScreen: string[];
-  ignoreVDesktop: string[];
-  tileNothing: boolean;
-  tilingClass: string[];
-
-  screenDefaultLayout: string[];
-
-  //Dock
-  dockOrder: [number, number, number, number];
-  dockHHeight: number;
-  dockHWide: number;
-  dockHGap: number;
-  dockHEdgeGap: number;
-  dockHAlignment: number;
-  dockHEdgeAlignment: number;
-  dockVHeight: number;
-  dockVWide: number;
-  dockVGap: number;
-  dockVEdgeGap: number;
-  dockVAlignment: number;
-  dockVEdgeAlignment: number;
-  dockSurfacesConfig: string[];
-  dockWindowClassConfig: string[];
-
-  //Options
-  tiledWindowsLayer: WindowLayer;
-  floatedWindowsLayer: WindowLayer;
-
-  floatInit: IFloatInit | null;
-
-  soleWindowDefaultProps: ISoleWindowProps;
-  soleWindowOutputOverride: { [outputName: string]: ISoleWindowProps };
-
-  unfitGreater: boolean;
-  unfitLess: boolean;
-
+  // Extra features
+  preventMinimize: boolean;
+  floatSkipPager: boolean;
   notificationDuration: number;
 
-  layoutPerActivity: boolean;
-  layoutPerDesktop: boolean;
-  noTileBorder: boolean;
-  keepTilingOnDrag: boolean;
-  preventMinimize: boolean;
-  preventProtrusion: boolean;
-  floatSkipPager: boolean;
-
-  //log
+  // Meta
+  metaIsToggle: boolean;
+  metaIsPushedTwice: boolean;
+  metaTimeout: number;
+  metaConf: string[];
+  defaultMetaConfig: { [key: string]: Shortcut };
 }
 
 interface IKrohnkiteMeta {
@@ -350,7 +255,7 @@ interface IDriverContext {
 
 interface ILayoutClass {
   readonly id: string;
-  new (capacity?: number | null): ILayout;
+  new(capacity?: number | null): ILayout;
 }
 
 interface ILayout {

@@ -134,9 +134,7 @@ class KWinWindow implements IDriverWindow {
       KWinWindow.isContain(KWINCONFIG.ignoreClass, window.resourceClass) ||
       KWinWindow.isContain(KWINCONFIG.ignoreClass, window.resourceName) ||
       matchWords(this.window.caption, KWINCONFIG.ignoreTitle) >= 0 ||
-      KWinWindow.isContain(KWINCONFIG.ignoreRole, window.windowRole) ||
-      (KWINCONFIG.tileNothing &&
-        KWinWindow.isContain(KWINCONFIG.tilingClass, window.resourceClass));
+      KWinWindow.isContain(KWINCONFIG.ignoreRole, window.windowRole);
     this.isFloatByConfig =
       KWinWindow.isContain(KWINCONFIG.floatingClass, window.resourceClass) ||
       KWinWindow.isContain(KWINCONFIG.floatingClass, window.resourceName) ||
@@ -192,54 +190,7 @@ class KWinWindow implements IDriverWindow {
 
     if (geometry !== undefined) {
       geometry = this.adjustGeometry(geometry);
-      if (KWINCONFIG.preventProtrusion) {
-        const area = toRect(
-          this.workspace.clientArea(
-            ClientAreaOption.PlacementArea,
-            this.window.output,
-            this.workspace.currentDesktop,
-          ),
-        );
-        const winOutput = this.window.output;
-        if (
-          geometry.x < area.x &&
-          KWinDriver.getNeighborOutput(this.workspace, "left", winOutput) ===
-          null
-        ) {
-          geometry.x = area.x;
-        }
-        if (
-          geometry.y < area.y &&
-          KWinDriver.getNeighborOutput(this.workspace, "up", winOutput) === null
-        ) {
-          geometry.y = area.y;
-        }
-        if (
-          geometry.maxX > area.maxX &&
-          KWinDriver.getNeighborOutput(this.workspace, "right", winOutput) ===
-          null
-        ) {
-          if (geometry.width > area.width) {
-            geometry.x = area.x;
-            geometry.width = area.width;
-          } else {
-            geometry.x = area.maxX - geometry.width;
-          }
-        }
-        if (
-          geometry.maxY > area.maxY &&
-          KWinDriver.getNeighborOutput(this.workspace, "down", winOutput) ===
-          null
-        ) {
-          if (geometry.height > area.height) {
-            geometry.y = area.y;
-            geometry.height = area.height;
-          } else {
-            geometry.y = area.maxY - geometry.height;
-          }
-        }
-        geometry = this.adjustGeometry(geometry);
-      }
+      // protrusion prevention code removed for minimalism
       if (this.window.deleted) return;
       this.window.frameGeometry = toQRect(geometry);
       if (this._movePointerToCenter.isMove) {
@@ -307,47 +258,28 @@ class KWinWindow implements IDriverWindow {
 
   public getInitFloatGeometry(): Rect {
     let outputGeometry = this.window.output.geometry;
-    if (CONFIG.floatInit === null) {
-      return toRect(outputGeometry);
+    let width = outputGeometry.width * 0.5;
+    let height = outputGeometry.height * 0.5;
+
+    // Respect window constraints
+    if (this.window.minSize.width > 0) width = Math.max(width, this.window.minSize.width);
+    if (this.window.minSize.height > 0) height = Math.max(height, this.window.minSize.height);
+
+    // Check max size
+    if (this.window.maxSize.width > 0 && this.window.maxSize.width < Infinity) {
+      width = Math.min(width, this.window.maxSize.width);
     }
-    let width, height, x, y: number;
-    width = outputGeometry.width * (CONFIG.floatInit.windowWidth / 100);
-    height = outputGeometry.height * (CONFIG.floatInit.windowHeight / 100);
-    x = outputGeometry.x + outputGeometry.width / 2 - width / 2;
-    y = outputGeometry.y + outputGeometry.height / 2 - height / 2;
-    if (
-      this.window.minSize.width > outputGeometry.width ||
-      this.window.minSize.height > outputGeometry.height
-    ) {
-      width = this.window.minSize.width;
-      height = this.window.minSize.height;
-      x = outputGeometry.x;
-      y = outputGeometry.y;
-    } else if (
-      !this.window.resizeable ||
-      this.window.maxSize.width < width ||
-      this.window.maxSize.height < height
-    ) {
-      width = this.window.maxSize.width;
-      height = this.window.maxSize.height;
-      x = outputGeometry.x + outputGeometry.width / 2 - width / 2;
-      y = outputGeometry.y + outputGeometry.height / 2 - height / 2;
-    } else {
-      if (CONFIG.floatInit.randomize) {
-        x =
-          x +
-          getRandomInt(
-            (x - outputGeometry.x) * (CONFIG.floatInit.randomWidth / 100),
-            true,
-          );
-        y =
-          y +
-          getRandomInt(
-            (y - outputGeometry.y) * (CONFIG.floatInit.randomHeight / 100),
-            true,
-          );
-      }
+    if (this.window.maxSize.height > 0 && this.window.maxSize.height < Infinity) {
+      height = Math.min(height, this.window.maxSize.height);
     }
+
+    if (!this.window.resizeable) {
+      width = this.window.width;
+      height = this.window.height;
+    }
+
+    const x = outputGeometry.x + (outputGeometry.width - width) / 2;
+    const y = outputGeometry.y + (outputGeometry.height - height) / 2;
 
     return new Rect(x, y, width, height);
   }

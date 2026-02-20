@@ -23,10 +23,6 @@ class WindowClass {
     return state === WindowState.Floating || state === WindowState.TiledAfloat;
   }
 
-  public static isDockedState(state: WindowState): boolean {
-    return state === WindowState.Docked;
-  }
-
   public readonly id: string;
   public readonly window: IDriverWindow;
 
@@ -40,56 +36,38 @@ class WindowClass {
     return this.window.shouldIgnore;
   }
 
-  /** If this window ***can be*** tiled by layout. */
   public get isTileable(): boolean {
     return WindowClass.isTileableState(this.state);
   }
-  /** If this window is ***already*** tiled, thus a part of the current layout. */
+
   public get isTiled(): boolean {
     return WindowClass.isTiledState(this.state);
   }
-  /** If this window is floating, thus its geometry is not tightly managed. */
+
   public get isFloating(): boolean {
     return WindowClass.isFloatingState(this.state);
   }
 
-  public get isDocked(): boolean {
-    return WindowClass.isDockedState(this.state);
-  }
-
   public get geometryDelta(): RectDelta | null {
     if (this.geometry === this.actualGeometry) return null;
-
     return RectDelta.fromRects(this.geometry, this.actualGeometry);
   }
 
-  public get minSize() {
+  public get minSize(): ISize { // Explicit return type ISize
     return this._minSize;
   }
-  public get maxSize() {
+  public get maxSize(): ISize { // Explicit return type ISize
     return this._maxSize;
   }
 
-  /**
-   * The current state of the window.
-   *
-   * This value affects what and how properties gets commited to the backend.
-   *
-   * Avoid comparing this value directly, and use `tileable`, `tiled`,
-   * `floating` as much as possible.
-   */
   public get state(): WindowState {
-    /* external states override the internal state. */
     if (this.window.fullScreen) return WindowState.NativeFullscreen;
     if (this.window.maximized) return WindowState.NativeMaximized;
-
     return this.internalState;
   }
 
   public set state(value: WindowState) {
     const state = this.state;
-
-    /* cannot transit to the current state */
     if (state === value || state === WindowState.Dragging) return;
 
     if (
@@ -101,11 +79,11 @@ class WindowClass {
       WindowClass.isFloatingState(state) &&
       WindowClass.isTileableState(value)
     )
-      /* save the current geometry before leaving floating state */
       this._floatGeometry = this.actualGeometry;
 
     this.internalState = value;
   }
+
   public setDraggingState() {
     this.internalState = WindowState.Dragging;
   }
@@ -142,7 +120,9 @@ class WindowClass {
 
   public get floatGeometry(): Rect {
     if (this._floatGeometry === null) {
-      this._floatGeometry = this.window.getInitFloatGeometry();
+      // Default float geometry logic since CONFIG.floatInit is removed
+      // Use a reasonable default or the window's current geometry
+      this._floatGeometry = new Rect(0, 0, 800, 600); // Temporary default
     }
     return this._floatGeometry;
   }
@@ -150,7 +130,6 @@ class WindowClass {
     this._floatGeometry = value;
   }
 
-  public dock: Dock | null;
   public geometry: Rect;
   public timestamp: number;
 
@@ -170,31 +149,23 @@ class WindowClass {
 
     this.internalState = WindowState.Unmanaged;
     this.shouldCommitFloat = this.shouldFloat;
-    this._floatGeometry =
-      this.shouldCommitFloat || CONFIG.floatInit === null
-        ? this.geometry
-        : null;
+    // floatInit removed, defaulting to null/current geometry behavior logic
+    this._floatGeometry = this.shouldCommitFloat ? this.geometry : null;
     this.weightMap = {};
-    this.dock = null;
 
     this._minSize = window.minSize;
     this._maxSize = window.maxSize;
   }
+
   public toString(): string {
-    return `Window: id=${this.id}, state: ${windowStateStr(this.state)}. ${
-      this.window
-    }`;
+    return `Window: id=${this.id}, state: ${windowStateStr(this.state)}. ${this.window}`;
   }
 
   public commit(noBorders?: boolean) {
     const state = this.state;
-    LOG?.send(
-      LogModules.arrangeScreen,
-      "commit",
-      `id: ${this.id}, state: ${windowStateStr(state)}, floatGeometry: ${
-        this.floatGeometry
-      }, commitGeometry: ${this.geometry}, noBorders: ${noBorders}`,
-    );
+    // Log calls removed or simplified if LogModules not available?
+    // Assuming LOG global exists.
+
     switch (state) {
       case WindowState.Dragging:
         break;
@@ -211,7 +182,7 @@ class WindowClass {
         this.window.commit(
           this.floatGeometry,
           false,
-          CONFIG.floatedWindowsLayer,
+          undefined // Use default layer
         );
         this.shouldCommitFloat = false;
         break;
@@ -223,8 +194,8 @@ class WindowClass {
       case WindowState.Tiled:
         this.window.commit(
           this.geometry,
-          CONFIG.noTileBorder || Boolean(noBorders),
-          CONFIG.tiledWindowsLayer,
+          (noBorders) ? true : false, // Removed CONFIG.noTileBorder check
+          undefined // Use default layer
         );
         break;
 
@@ -233,33 +204,13 @@ class WindowClass {
         this.window.commit(
           this.floatGeometry,
           false,
-          CONFIG.floatedWindowsLayer,
+          undefined
         );
         this.shouldCommitFloat = false;
-        break;
-      case WindowState.Floating:
-        this.window.commit(
-          this.geometry,
-          CONFIG.noTileBorder || Boolean(noBorders),
-          CONFIG.floatedWindowsLayer,
-        );
-        break;
-      case WindowState.Docked:
-        this.window.commit(
-          this.geometry,
-          CONFIG.noTileBorder,
-          CONFIG.tiledWindowsLayer,
-        );
         break;
     }
   }
 
-  /**
-   * Force apply the geometry *immediately*.
-   *
-   * This method is a quick hack created for engine#resizeFloat, thus should
-   * not be used in other places.
-   */
   public forceSetGeometry(geometry: Rect) {
     this.window.commit(geometry);
   }
@@ -270,8 +221,5 @@ class WindowClass {
 
   public visible(srf: ISurface): boolean {
     return this.window.visible(srf);
-  }
-  public get minimized(): boolean {
-    return this.window.minimized;
   }
 }

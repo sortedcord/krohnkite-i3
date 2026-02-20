@@ -4,30 +4,56 @@
     SPDX-License-Identifier: MIT
 */
 
-type BTreeLayoutPart = HalfSplitLayoutPart<
-  BTreeLayoutPart | FillLayoutPart,
-  BTreeLayoutPart | FillLayoutPart
->;
+class TreeNode {
+  public parent: TreeNode | null = null;
+  public children: TreeNode[] = [];
+  public windowID: string | null = null;
+  public splitType: "horizontal" | "vertical" = "horizontal";
+  public splitRatio: number = 0.5;
+
+  constructor() { }
+
+  public get isLeaf(): boolean {
+    return this.children.length === 0;
+  }
+
+  public addChild(node: TreeNode, index: number = -1): void {
+    node.parent = this;
+    if (index < 0 || index >= this.children.length) {
+      this.children.push(node);
+    } else {
+      this.children.splice(index, 0, node);
+    }
+  }
+
+  public removeChild(node: TreeNode): void {
+    const index = this.children.indexOf(node);
+    if (index >= 0) {
+      this.children.splice(index, 1);
+      node.parent = null;
+    }
+  }
+
+  public replaceChild(oldNode: TreeNode, newNode: TreeNode): void {
+    const index = this.children.indexOf(oldNode);
+    if (index >= 0) {
+      this.children[index] = newNode;
+      newNode.parent = this;
+      oldNode.parent = null;
+    }
+  }
+}
 
 class BinaryTreeLayout implements ILayout {
   public static readonly id = "BinaryTreeLayout";
-
   public readonly classID = BinaryTreeLayout.id;
+  public readonly description = "Tree";
   public readonly capacity?: number | null;
 
-  public get description(): string {
-    return "BTree";
-  }
+  private root: TreeNode | null = null;
+  private lastFocusPath: string | null = null;
 
-  private parts: BTreeLayoutPart;
-
-  constructor(capacity?: number | null) {
-    this.capacity = capacity !== undefined ? capacity : null;
-    this.parts = new HalfSplitLayoutPart(
-      new FillLayoutPart(),
-      new FillLayoutPart()
-    );
-    this.parts.angle = 0;
+  constructor() {
   }
 
   public apply(
@@ -36,76 +62,196 @@ class BinaryTreeLayout implements ILayout {
     area: Rect,
     gap: number
   ): void {
-    tileables.forEach((tileable) => (tileable.state = WindowState.Tiled));
-    this.create_parts(tileables.length);
-    let rectangles = this.parts.apply(area, tileables, gap);
-    rectangles.forEach((geometry, i) => {
-      tileables[i].geometry = geometry;
+    this.reconcile(ctx, tileables);
+
+    if (this.root) {
+      this.applyNode(this.root, area, gap, tileables);
+    }
+  }
+
+  private reconcile(ctx: EngineContext, tileables: WindowClass[]): void {
+    const tileableIDs = new Set(tileables.map(t => t.id));
+
+    // Remove nodes for windows that no longer exist
+    this.pruneTree(this.root, tileableIDs);
+
+    // If root disappeared
+    if (this.root && this.root.isLeaf && this.root.windowID && !tileableIDs.has(this.root.windowID)) {
+      this.root = null;
+    }
+
+    // Collapse empty containers
+    this.simplifyTree(this.root);
+    if (this.root && !this.root.isLeaf && this.root.children.length === 0) {
+      this.root = null;
+    }
+
+    // Add new windows
+    tileables.forEach(tileable => {
+      if (!this.findNode(this.root, tileable.id)) {
+        this.insertWindow(ctx, tileable);
+      }
     });
   }
-  private create_parts(tiles_len: number): void {
-    let head = this.get_head();
-    head.angle = 0;
-    if (tiles_len > 2) {
-      // es5 has not the log2 function, so I use natural log
-      let level = Math.ceil(Math.log(tiles_len) * 1.442695);
-      let level_capacity = 2 ** (level - 1);
-      let half_level_capacity = 2 ** (level - 2);
 
-      if (tiles_len > level_capacity + half_level_capacity) {
-        head.primarySize = tiles_len - level_capacity;
+  private pruneTree(node: TreeNode | null, currentIDs: Set<string>): void {
+    if (!node) return;
+
+    // Check children
+    for (let i = node.children.length - 1; i >= 0; i--) {
+      const child = node.children[i];
+      if (child.isLeaf) {
+        if (child.windowID && !currentIDs.has(child.windowID)) {
+          node.children.splice(i, 1);
+          child.parent = null;
+        }
       } else {
-        head.primarySize = half_level_capacity;
-      }
-      this.build_binary_tree(head, level, 2, tiles_len);
-    }
-    this.parts = head;
-  }
-
-  private build_binary_tree(
-    head: BTreeLayoutPart,
-    max_level: number,
-    current_level: number,
-    tiles_len: number
-  ): void {
-    if (current_level <= max_level) {
-      if (head.primarySize > 1) {
-        let primary = this.get_head();
-        primary.primarySize = Math.floor(head.primarySize / 2);
-        primary.angle = current_level % 2 ? 0 : 90;
-        head.primary = primary;
-        this.build_binary_tree(
-          primary,
-          max_level,
-          current_level + 1,
-          head.primarySize
-        );
-      }
-      if (tiles_len - head.primarySize > 1) {
-        let secondary = this.get_head();
-        secondary.primarySize = Math.floor((tiles_len - head.primarySize) / 2);
-        secondary.angle = current_level % 2 ? 0 : 90;
-        head.secondary = secondary;
-        this.build_binary_tree(
-          secondary,
-          max_level,
-          current_level + 1,
-          tiles_len - head.primarySize
-        );
+        this.pruneTree(child, currentIDs);
+        // If child container became empty, remove it? 
+        // Handled in simplifyTree
       }
     }
   }
 
-  private get_head(): HalfSplitLayoutPart<FillLayoutPart, FillLayoutPart> {
-    return new HalfSplitLayoutPart(new FillLayoutPart(), new FillLayoutPart());
+  private simplifyTree(node: TreeNode | null): void {
+    if (!node || node.isLeaf) return;
+
+    // Recursively simplify children
+    [...node.children].forEach(c => this.simplifyTree(c));
+
+    // Remove empty leaf children (that are not windows)
+    for (let i = node.children.length - 1; i >= 0; i--) {
+      const child = node.children[i];
+      if (child.isLeaf && !child.windowID) {
+        node.children.splice(i, 1);
+        child.parent = null;
+      }
+    }
+
+    // Collapse single-child containers
+    if (node.children.length === 1) {
+      const child = node.children[0];
+      if (node.parent) {
+        node.parent.replaceChild(node, child);
+      } else {
+        // If I am root, make my child the new root
+        this.root = child;
+        child.parent = null;
+      }
+    }
   }
 
+  private findNode(node: TreeNode | null, windowID: string): TreeNode | null {
+    if (!node) return null;
+    if (node.windowID === windowID) return node;
+    for (const child of node.children) {
+      const res = this.findNode(child, windowID);
+      if (res) return res;
+    }
+    return null;
+  }
+
+  private insertWindow(ctx: EngineContext, tileable: WindowClass): void {
+    const newNode = new TreeNode();
+    newNode.windowID = tileable.id;
+
+    if (!this.root) {
+      this.root = newNode;
+      return;
+    }
+
+    // Insert relative to focused window
+    const currentWin = ctx.currentWindow;
+    let targetNode: TreeNode | null = null;
+
+    if (currentWin) {
+      targetNode = this.findNode(this.root, currentWin.id);
+    }
+
+    if (!targetNode) {
+      // Fallback: use root or first leaf
+      let curr = this.root;
+      while (!curr.isLeaf && curr.children.length > 0) {
+        curr = curr.children[0];
+      }
+      targetNode = curr;
+    }
+
+    // Now we have a target node to split/append to
+    const parent = targetNode.parent;
+    const newContainer = new TreeNode();
+
+    // Determine split direction
+    // For i3 style: if parent is horiz, we might want vertical?
+    // Or just default to horizontal unless user specified?
+    // Let's alternate for now
+    newContainer.splitType = (targetNode.parent?.splitType === 'horizontal') ? 'vertical' : 'horizontal';
+
+    // If target is root, we replace root with new container
+    if (!parent) {
+      this.root = newContainer;
+    } else {
+      parent.replaceChild(targetNode, newContainer);
+    }
+
+    newContainer.addChild(targetNode);
+    newContainer.addChild(newNode);
+
+    // Ensure ratios are reset or set? 
+    // They default to 0.5/even share in applyNode logic.
+  }
+
+  private applyNode(node: TreeNode, area: Rect, gap: number, tileables: WindowClass[]): void {
+    if (node.isLeaf) {
+      if (node.windowID) {
+        const win = tileables.find(w => w.id === node.windowID);
+        if (win) {
+          win.state = WindowState.Tiled;
+          win.geometry = area;
+        }
+      }
+      return;
+    }
+
+    if (node.children.length > 0) {
+      const isHorizontal = node.splitType === 'horizontal';
+      // Calculate sizes
+      // Assuming equal split for N children for simplicity in this minimal version,
+      // ignoring custom splitRatio for N>2 or creating complex binary structures.
+
+      const count = node.children.length;
+      const totalGap = (count - 1) * gap;
+      const availableSize = (isHorizontal ? area.width : area.height) - totalGap;
+      const unitSize = Math.floor(availableSize / count);
+
+      let currentPos = isHorizontal ? area.x : area.y;
+
+      node.children.forEach((child, i) => {
+        // Last child gets remaining space to avoid rounding gaps
+        const mySize = (i === count - 1)
+          ? ((isHorizontal ? area.width : area.height) - (currentPos - (isHorizontal ? area.x : area.y)))
+          : unitSize;
+
+        const myRect = new Rect(
+          isHorizontal ? currentPos : area.x,
+          isHorizontal ? area.y : currentPos,
+          isHorizontal ? mySize : area.width,
+          isHorizontal ? area.height : mySize
+        );
+
+        this.applyNode(child, myRect, gap, tileables);
+
+        currentPos += mySize + gap;
+      });
+    }
+  }
+
+  // Stub for clone to satisfy potentially external usage
   public clone(): ILayout {
-    const other = new StackedLayout();
-    return other;
+    return new BinaryTreeLayout();
   }
 
   public toString(): string {
-    return "BTreeLayout()";
+    return "BinaryTreeLayout()";
   }
 }

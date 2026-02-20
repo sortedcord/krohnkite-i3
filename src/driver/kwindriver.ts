@@ -771,67 +771,33 @@ class KWinDriver implements IDriverContext {
         (winClassWin) => (winClassWin.window as KWinWindow).window,
       );
     }
-    switch (wType) {
-      case WinTypes.tiled | WinTypes.docked | WinTypes.float: {
-        windows = mapWinClassToKWinWindow(
-          this.engine.windows.getVisibleWindows(surface),
-        );
-        break;
-      }
-      case WinTypes.surfaces: {
-        windows = [];
-        break;
-      }
-      case WinTypes.tiled: {
-        windows = mapWinClassToKWinWindow(
-          this.engine.windows.getVisibleTiles(surface),
-        );
-        break;
-      }
-      case WinTypes.float: {
-        windows = mapWinClassToKWinWindow(
-          this.engine.windows.getVisibleFloat(surface),
-        );
-        break;
-      }
-      case WinTypes.docked: {
-        windows = mapWinClassToKWinWindow(
-          this.engine.windows.getVisibleDocked(surface),
-        );
-        break;
-      }
-      case WinTypes.tiled | WinTypes.float: {
-        windows = mapWinClassToKWinWindow(
-          this.engine.windows.getVisibleTilesOrFloat(surface),
-        );
-        break;
-      }
-      case WinTypes.tiled | WinTypes.docked: {
-        windows = mapWinClassToKWinWindow(
-          this.engine.windows.getVisibleTilesOrDocked(surface),
-        );
-        break;
-      }
-      case WinTypes.float | WinTypes.docked: {
-        windows = mapWinClassToKWinWindow(
-          this.engine.windows.getVisibleFloatOrDocked(surface),
-        );
-        break;
-      }
-      case WinTypes.special: {
-        windows = this.workspace.stackingOrder.filter(
-          (win) =>
-            win.output === surface.output &&
-            (win.desktops.length === 0 ||
-              win.desktops.indexOf(surface.vDesktop) > -1) &&
-            !win.minimized &&
-            !win.hidden &&
-            !win.deleted &&
-            win.resourceClass !== "plasmashell",
-        );
-        return windows;
-      }
+    // Simplified: No dock support, minimal types
+    if (wType & WinTypes.tiled) {
+      windows = windows.concat(mapWinClassToKWinWindow(this.engine.windows.getVisibleTiles(surface)));
     }
+    if (wType & WinTypes.float) {
+      windows = windows.concat(mapWinClassToKWinWindow(this.engine.windows.getVisibleFloat(surface)));
+    }
+    if (wType & WinTypes.surfaces) {
+      // Not implemented in simplified version or empty
+    }
+    if (wType & WinTypes.special) {
+      let special = this.workspace.stackingOrder.filter(
+        (win) =>
+          win.output === surface.output &&
+          (win.desktops.length === 0 ||
+            win.desktops.indexOf(surface.vDesktop) > -1) &&
+          !win.minimized &&
+          !win.hidden &&
+          !win.deleted &&
+          win.resourceClass !== "plasmashell",
+      );
+      windows = windows.concat(special);
+    }
+
+    // Filter duplicates if any (though types are usually disjoint in engine except explicit OR)
+    windows = [...new Set(windows)];
+
     let filterFunc: (r: Rect) => boolean;
     switch (direction) {
       case "left":
@@ -933,9 +899,7 @@ class KWinDriver implements IDriverContext {
         this.enter(() => this.control.onShortcut(this, shortcut));
       };
     };
-    this.shortcuts
-      .getToggleDock()
-      .activated.connect(callbackShortcut(Shortcut.ToggleDock));
+
     this.shortcuts
       .getFocusNext()
       .activated.connect(callbackShortcut(Shortcut.FocusNext));
@@ -991,84 +955,10 @@ class KWinDriver implements IDriverContext {
     this.shortcuts
       .getToggleFloat()
       .activated.connect(callbackShortcut(Shortcut.ToggleFloat));
-    this.shortcuts
-      .getFloatAll()
-      .activated.connect(callbackShortcut(Shortcut.ToggleFloatAll));
-    this.shortcuts
-      .getNextLayout()
-      .activated.connect(callbackShortcut(Shortcut.NextLayout));
-    this.shortcuts
-      .getPreviousLayout()
-      .activated.connect(callbackShortcut(Shortcut.PreviousLayout));
 
-    this.shortcuts
-      .getRotate()
-      .activated.connect(callbackShortcut(Shortcut.Rotate));
-    this.shortcuts
-      .getRotatePart()
-      .activated.connect(callbackShortcut(Shortcut.RotatePart));
-
-    this.shortcuts
-      .getSetMaster()
-      .activated.connect(callbackShortcut(Shortcut.SetMaster));
-
-    this.shortcuts
-      .getRaiseSurfaceCapacity()
-      .activated.connect(callbackShortcut(Shortcut.RaiseSurfaceCapacity));
-    this.shortcuts
-      .getLowerSurfaceCapacity()
-      .activated.connect(callbackShortcut(Shortcut.LowerSurfaceCapacity));
-
-    this.shortcuts
-      .getKrohnkiteMeta()
-      .activated.connect(callbackShortcut(Shortcut.KrohnkiteMeta));
-
-    const callbackShortcutLayout = (layoutClass: ILayoutClass) => {
-      return () => {
-        LOG?.send(LogModules.shortcut, "shortcut layout", `${layoutClass.id}`);
-        this.enter(() =>
-          this.control.onShortcut(this, Shortcut.SetLayout, layoutClass.id),
-        );
-      };
-    };
-
-    this.shortcuts
-      .getTileLayout()
-      .activated.connect(callbackShortcutLayout(TileLayout));
-    this.shortcuts
-      .getMonocleLayout()
-      .activated.connect(callbackShortcutLayout(MonocleLayout));
-    this.shortcuts
-      .getThreeColumnLayout()
-      .activated.connect(callbackShortcutLayout(ThreeColumnLayout));
-    this.shortcuts
-      .getSpreadLayout()
-      .activated.connect(callbackShortcutLayout(SpreadLayout));
-    this.shortcuts
-      .getStairLayout()
-      .activated.connect(callbackShortcutLayout(StairLayout));
-    this.shortcuts
-      .getFloatingLayout()
-      .activated.connect(callbackShortcutLayout(FloatingLayout));
-    this.shortcuts
-      .getQuarterLayout()
-      .activated.connect(callbackShortcutLayout(QuarterLayout));
-    this.shortcuts
-      .getStackedLayout()
-      .activated.connect(callbackShortcutLayout(StackedLayout));
-    this.shortcuts
-      .getColumnsLayout()
-      .activated.connect(callbackShortcutLayout(ColumnsLayout));
-    this.shortcuts
-      .getSpiralLayout()
-      .activated.connect(callbackShortcutLayout(SpiralLayout));
-    this.shortcuts
-      .getBTreeLayout()
-      .activated.connect(callbackShortcutLayout(BinaryTreeLayout));
-    this.shortcuts
-      .getCascadeLayout()
-      .activated.connect(callbackShortcutLayout(CascadeLayout));
+    /* Removed shortcuts for features not present in minimal build */
   }
+
 
   /**
    * Binds callback to the signal w/ extra fail-safe measures, like re-entry
