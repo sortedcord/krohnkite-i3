@@ -177,28 +177,29 @@ class BinaryTreeLayout implements ILayout {
       targetNode = curr;
     }
 
-    // Now we have a target node to split/append to
+    // Simplified i3-insertion:
+    // If we have a parent container, just add the new window as a sibling to the focused window.
+    // Unless we are at the root level and root is a leaf window.
+
     const parent = targetNode.parent;
-    const newContainer = new TreeNode();
 
-    // Determine split direction
-    // For i3 style: if parent is horiz, we might want vertical?
-    // Or just default to horizontal unless user specified?
-    // Let's alternate for now
-    newContainer.splitType = (targetNode.parent?.splitType === 'horizontal') ? 'vertical' : 'horizontal';
-
-    // If target is root, we replace root with new container
-    if (!parent) {
-      this.root = newContainer;
+    if (parent) {
+      // Add as sibling
+      const index = parent.children.indexOf(targetNode);
+      parent.addChild(newNode, index + 1);
     } else {
-      parent.replaceChild(targetNode, newContainer);
+      // targetNode is root. Root is a window.
+      // Create a new container to hold both.
+      // Default split: based on config or horizontal
+      const newContainer = new TreeNode();
+      newContainer.splitType = CONFIG.defaultSplitOrientation === 'vertical' ? 'vertical' : 'horizontal';
+
+      this.root = newContainer;
+      targetNode.parent = null; // Detach from old context (none)
+
+      newContainer.addChild(targetNode);
+      newContainer.addChild(newNode);
     }
-
-    newContainer.addChild(targetNode);
-    newContainer.addChild(newNode);
-
-    // Ensure ratios are reset or set? 
-    // They default to 0.5/even share in applyNode logic.
   }
 
   private applyNode(node: TreeNode, area: Rect, gap: number, tileables: WindowClass[]): void {
