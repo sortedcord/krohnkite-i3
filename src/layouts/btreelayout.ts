@@ -51,9 +51,13 @@ class BinaryTreeLayout implements ILayout {
   public readonly capacity?: number | null;
 
   private root: TreeNode | null = null;
-  private lastFocusPath: string | null = null;
+  private nextSplit: "horizontal" | "vertical" | null = null;
 
   constructor() {
+  }
+
+  public setNextSplit(split: "horizontal" | "vertical"): void {
+    this.nextSplit = split;
   }
 
   public apply(
@@ -178,10 +182,30 @@ class BinaryTreeLayout implements ILayout {
     }
 
     // Simplified i3-insertion:
-    // If we have a parent container, just add the new window as a sibling to the focused window.
-    // Unless we are at the root level and root is a leaf window.
+    // If nextSplit is set, we need to create a new container around the targetNode with that split.
+    // If nextSplit is NOT set, we just add as sibling to current container.
 
     const parent = targetNode.parent;
+
+    if (this.nextSplit) {
+      // User requested a split direction for the NEXT window.
+      // Wrap targetNode in a new container of type nextSplit.
+      const newContainer = new TreeNode();
+      newContainer.splitType = this.nextSplit;
+
+      if (parent) {
+        parent.replaceChild(targetNode, newContainer);
+      } else {
+        this.root = newContainer;
+      }
+
+      targetNode.parent = null;
+      newContainer.addChild(targetNode);
+      newContainer.addChild(newNode);
+
+      this.nextSplit = null; // Reset after usage
+      return;
+    }
 
     if (parent) {
       // Add as sibling

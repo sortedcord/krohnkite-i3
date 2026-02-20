@@ -220,6 +220,17 @@ class TilingController {
         if (ctx.currentWindow) this.engine.toggleFloat(ctx.currentWindow);
         break;
 
+      case Shortcut.SplitVertical:
+        if (ctx.currentWindow) {
+          this.engine.layouts.setSplit(ctx.currentSurface, "vertical");
+        }
+        break;
+      case Shortcut.SplitHorizontal:
+        if (ctx.currentWindow) {
+          this.engine.layouts.setSplit(ctx.currentSurface, "horizontal");
+        }
+        break;
+
       // Shortcuts for SetMaster/FloatAll/Layout cycling removed.
 
 

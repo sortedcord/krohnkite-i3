@@ -41,6 +41,13 @@ class LayoutStore {
     return null;
   }
 
+  public setSplit(srf: ISurface, splitStr: "vertical" | "horizontal"): void {
+    const layout = this.getCurrentLayout(srf);
+    if (layout instanceof BinaryTreeLayout) {
+      layout.setNextSplit(splitStr);
+    }
+  }
+
   private getEntry(srf: ISurface): LayoutStoreEntry {
     // Use surface ID (output + desktop + activity)
     if (!this.store[srf.id]) {

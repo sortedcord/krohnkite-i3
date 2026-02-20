@@ -956,6 +956,14 @@ class KWinDriver implements IDriverContext {
       .getToggleFloat()
       .activated.connect(callbackShortcut(Shortcut.ToggleFloat));
 
+    this.shortcuts
+      .getSplitVertical()
+      .activated.connect(callbackShortcut(Shortcut.SplitVertical));
+
+    this.shortcuts
+      .getSplitHorizontal()
+      .activated.connect(callbackShortcut(Shortcut.SplitHorizontal));
+
     /* Removed shortcuts for features not present in minimal build */
   }
 

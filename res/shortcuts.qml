@@ -198,4 +198,39 @@ Item {
         text: "Krohnkite: Toggle Float";
         sequence: "Meta+F";
     }
+
+    function getSplitVertical() {
+        return splitVertical;
+    }
+    ShortcutHandler {
+        id: splitVertical;
+
+        name: "KrohnkiteSplitVertical";
+        text: "Krohnkite: Split Vertical";
+        sequence: "Meta+V";
+    }
+
+    function getSplitHorizontal() {
+        return splitHorizontal;
+    }
+    ShortcutHandler {
+        id: splitHorizontal;
+
+        name: "KrohnkiteSplitHorizontal";
+        text: "Krohnkite: Split Horizontal";
+        sequence: "Meta+G"; // H is used for move left. Using G for now? Or H? Meta+G is common alternatives. Or Meta+H if move is separate.
+        // Wait, standard Vim move is HJKL.
+        // Usually i3 uses Mod+H (horizontal) and Mod+V (vertical).
+        // But Mod+H is Left.
+        // i3 default config uses:
+        // Mod+h focus left
+        // Mod+v split vertical
+        // Mod+Shift+v split horizontal (Wait no)
+        // default: Mod+h (split h) Mod+v (split v). But then what is move left?
+        // i3 default uses arrows or jkl;
+        // Mod+j left, k down, l up, ; right.
+        // Ah. Vim binding users often remap split to other keys.
+        // Let's use Meta+V for vertical. 
+        // Meta+B for Horizontal? G is good.
+    }
 }

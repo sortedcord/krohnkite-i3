@@ -73,6 +73,9 @@ const Shortcut = {
   Decrease: "Decrease", // Used for gaps?
 
   ToggleFloat: "ToggleFloat",
+  SplitVertical: "SplitVertical", // Meta+V
+  SplitHorizontal: "SplitHorizontal", // Meta+H
+
   // ToggleFloatAll: "ToggleFloatAll", // Removed
   // SetMaster: "SetMaster", // Removed
   // NextLayout: "NextLayout", // Removed
@@ -116,6 +119,9 @@ interface IShortcuts {
   getDecrease(): ShortcutHandler;
 
   getToggleFloat(): ShortcutHandler;
+
+  getSplitVertical(): ShortcutHandler;
+  getSplitHorizontal(): ShortcutHandler;
 }
 
 
