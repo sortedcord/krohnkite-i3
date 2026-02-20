@@ -1,31 +1,20 @@
-# Kröhnkite
+# Kröhnkite-i3
 
 A dynamic tiling extension for KWin 6 only.
 
-Kröhnkite is mainly inspired by [dwm][] from suckless folks, and aims to
-provide rock solid stability while fully integrating into KWin.
+Krohnkite-i3 is a fork that specifically implements i3 style tiling
+to the KDE plasma desktop environment
 
-The name of the script is from mineral [Kröhnkite][wikipedia]; it starts with
-K and looks cool.
-
-[dwm]: https://dwm.suckless.org/
-[wikipedia]: https://en.wikipedia.org/wiki/Kr%C3%B6hnkite
-
-![screenshot](img/screenshot.png)
+<video src="./img/demo.mp4"></video>
 
 ## Features
 
-- DWM-like window tiling
-  - Dynamically tile windows, rather than manually placing each.
-  - Floating windows
-- Fully integrates into KWin features, including:
-  - **Multi-screen**
-  - **Activities & Virtual desktop**
-  - Basic window management (minimize, fullscreen, switching, etc)
-- Multiple Layout Support
-  - Tiling layout
-  - Monocle layout
-  - Desktop-friendly layouts (Spread, Stair)
+- [x] i3 style splitting (vertical and horizontal)
+- [ ] Nested container tree
+- [ ] alternative layouts
+  - [ ] stack
+  - [ ] tabbed
+
 
 ## Development Requirement
 
@@ -57,10 +46,10 @@ You can install Kröhnkite in multiple ways.
 You can download `krohnkite-x.x.x.x.kwinscript` file, and install it through
 _System Settings_.
 
-1.  Download the kwinscript file
-2.  Open `System Settings` > `Window Management` > `KWin Scripts`
-3.  Press `Import KWin script...` on the top-right corner
-4.  Select the downloaded file
+1. Download the kwinscript file
+2. Open `System Settings` > `Window Management` > `KWin Scripts`
+3. Press `Import KWin script...` on the top-right corner
+4. Select the downloaded file
 
 Alternatively, through command-line:
 get info about package:
@@ -134,7 +123,7 @@ go-task uninstall
 
 3. `Apply` -> `reboot`
 
-### Search a window parameters to filter, float etc.
+### Search a window parameters to filter, float etc
 
 1. Krohnkite options: ![options](img/conf.png)
 2. Options->Debug new Windows
@@ -219,8 +208,8 @@ convinient if title bars are removed.
 1. You can use the Oxygen decoration theme. [Oxygen theme settings][]
 2. You can install third-party decorations, see [Border color conversation][]
 3. You can add to the WM section in $HOME/.config/kdeglobals (this changes the default Breeze decoration frame colors):
-    - `frame=R,G,B`
-    - `inactiveFrame=R,G,B`
+   - `frame=R,G,B`
+   - `inactiveFrame=R,G,B`
 
 [Oxygen theme settings]: https://github.com/anametologin/krohnkite/assets/165245883/51b4cb48-33c7-4627-a119-33d1abbe2b99
 [Border color conversation]: https://github.com/anametologin/krohnkite/issues/15
@@ -239,7 +228,7 @@ This causes the applications to overlap with other applications. To mitigate thi
 7. Set the fields to `Force` and `0` x `0`
 8. Apply
 
-### Prevent borders and shadows from disappearing.
+### Prevent borders and shadows from disappearing
 
 When a window is marked "maximized" in Breeze theme, its borders are removed to save screen space.
 This behavior may not be preferable depending on your setup. This can be mitigated by disabling maximized windows using Window Rules.
