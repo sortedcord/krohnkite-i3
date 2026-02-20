@@ -946,13 +946,6 @@ class KWinDriver implements IDriverContext {
       .activated.connect(callbackShortcut(Shortcut.GrowWidth));
 
     this.shortcuts
-      .getIncrease()
-      .activated.connect(callbackShortcut(Shortcut.Increase));
-    this.shortcuts
-      .getDecrease()
-      .activated.connect(callbackShortcut(Shortcut.Decrease));
-
-    this.shortcuts
       .getToggleFloat()
       .activated.connect(callbackShortcut(Shortcut.ToggleFloat));
 

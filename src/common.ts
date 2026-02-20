@@ -69,8 +69,8 @@ const Shortcut = {
   ShrinkWidth: "ShrinkWidth",
   ShrinkHeight: "ShrinkHeight",
 
-  Increase: "Increase", // Used for gaps?
-  Decrease: "Decrease", // Used for gaps?
+  // Increase: "Increase", // Used for gaps?
+  // Decrease: "Decrease", // Used for gaps?
 
   ToggleFloat: "ToggleFloat",
   SplitVertical: "SplitVertical", // Meta+V
@@ -114,9 +114,6 @@ interface IShortcuts {
   getShrinkHeight(): ShortcutHandler;
   getShrinkWidth(): ShortcutHandler;
   getGrowWidth(): ShortcutHandler;
-
-  getIncrease(): ShortcutHandler;
-  getDecrease(): ShortcutHandler;
 
   getToggleFloat(): ShortcutHandler;
 
