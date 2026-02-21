@@ -10,6 +10,7 @@ class TreeNode {
   public windowID: string | null = null;
   public splitType: "horizontal" | "vertical" = "horizontal";
   public splitRatio: number = 0.5;
+  public weight: number = 1.0;
 
   constructor() { }
 
@@ -56,6 +57,112 @@ class BinaryTreeLayout implements ILayout {
 
   constructor() {
   }
+
+  public adjust(
+    area: Rect,
+    tiles: WindowClass[],
+    basis: WindowClass,
+    delta: RectDelta,
+    gap: number = 0
+  ): void {
+    if (!this.root) return;
+
+    const node = this.findNode(this.root, basis.id);
+    if (!node || !node.parent) return;
+
+    const parent = node.parent;
+    const isHorizontal = parent.splitType === 'horizontal';
+
+    // identify which edge is being dragged.
+    // delta.east != 0 -> right (isHorizontal)
+    // delta.west != 0 -> left (isHorizontal)
+    // delta.south != 0 -> bottom (isVertical)
+    // delta.north != 0 -> top (isVertical)
+
+    // Check relevant axis
+    if (isHorizontal) {
+      if (delta.east !== 0) {
+        this.resizeNode(node, delta.east, isHorizontal, tiles);
+      } else if (delta.west !== 0) {
+        // resizing left edge is like resizing the previous node's right edge
+        const index = parent.children.indexOf(node);
+        if (index > 0) {
+          const prev = parent.children[index - 1];
+          this.resizeNode(prev, -delta.west, isHorizontal, tiles);
+        }
+      }
+    } else { // vertical
+      if (delta.south !== 0) {
+        this.resizeNode(node, delta.south, isHorizontal, tiles);
+      } else if (delta.north !== 0) {
+        const index = parent.children.indexOf(node);
+        if (index > 0) {
+          const prev = parent.children[index - 1];
+          this.resizeNode(prev, -delta.north, isHorizontal, tiles);
+        }
+      }
+    }
+  }
+
+  private resizeNode(node: TreeNode, diff: number, isHorizontal: boolean, tiles: WindowClass[]): void {
+    if (!node.parent) return;
+    const parent = node.parent;
+    const children = parent.children;
+    const index = children.indexOf(node);
+
+    if (index >= children.length - 1) return;
+
+    const next = children[index + 1];
+
+    const nodeGeo = this.getNodeGeometry(node, tiles);
+    const nextGeo = this.getNodeGeometry(next, tiles);
+
+    if (nodeGeo && nextGeo) {
+      const nodeSize = isHorizontal ? nodeGeo.width : nodeGeo.height;
+      const nextSize = isHorizontal ? nextGeo.width : nextGeo.height;
+      const combinedSize = nodeSize + nextSize;
+
+      const combinedWeight = node.weight + next.weight;
+
+      const deltaWeight = (diff / combinedSize) * combinedWeight;
+
+      const newNodeWeight = node.weight + deltaWeight;
+      const newNextWeight = next.weight - deltaWeight;
+
+      if (newNodeWeight > 0.1 && newNextWeight > 0.1) {
+        node.weight = newNodeWeight;
+        next.weight = newNextWeight;
+      }
+    }
+  }
+
+  private getNodeGeometry(node: TreeNode, tiles: WindowClass[]): Rect | null {
+    if (node.isLeaf) {
+      if (node.windowID) {
+        const win = tiles.find(w => w.id === node.windowID);
+        return win ? win.geometry : null;
+      }
+      return null;
+    }
+
+    let rect: Rect | null = null;
+    for (const child of node.children) {
+      const childRect = this.getNodeGeometry(child, tiles);
+      if (childRect) {
+        if (!rect) rect = childRect;
+        else {
+          // manually union rects if Rect.union is not available or wrong
+          const x = Math.min(rect.x, childRect.x);
+          const y = Math.min(rect.y, childRect.y);
+          const r = Math.max(rect.x + rect.width, childRect.x + childRect.width);
+          const b = Math.max(rect.y + rect.height, childRect.y + childRect.height);
+          rect = new Rect(x, y, r - x, b - y);
+        }
+      }
+    }
+    return rect;
+  }
+
 
   public setNextSplit(split: "horizontal" | "vertical"): boolean {
     if (this.nextSplit === split) {
@@ -268,22 +375,24 @@ class BinaryTreeLayout implements ILayout {
 
     if (node.children.length > 0) {
       const isHorizontal = node.splitType === 'horizontal';
-      // calculate sizes
-      // assuming equal split for n children for simplicity in this minimal version,
-      // ignoring custom splitRatio for n>2 or creating complex binary structures
 
       const count = node.children.length;
       const totalGap = (count - 1) * gap;
       const availableSize = (isHorizontal ? area.width : area.height) - totalGap;
-      const unitSize = Math.floor(availableSize / count);
+
+      const totalWeight = node.children.reduce((acc, c) => acc + c.weight, 0);
 
       let currentPos = isHorizontal ? area.x : area.y;
 
       node.children.forEach((child, i) => {
-        // last child gets remaining space to avoid rounding gaps
-        const mySize = (i === count - 1)
-          ? ((isHorizontal ? area.width : area.height) - (currentPos - (isHorizontal ? area.x : area.y)))
-          : unitSize;
+        let mySize: number;
+
+        if (i === count - 1) {
+          mySize = ((isHorizontal ? area.width : area.height) - (currentPos - (isHorizontal ? area.x : area.y)));
+        } else {
+          const ratio = totalWeight > 0 ? (child.weight / totalWeight) : (1 / count);
+          mySize = Math.floor(availableSize * ratio);
+        }
 
         const myRect = new Rect(
           isHorizontal ? currentPos : area.x,
