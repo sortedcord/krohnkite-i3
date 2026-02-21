@@ -23,7 +23,7 @@ to the KDE plasma desktop environment
 
 ## Look at me
 
-1. If you change the Krohnkite configuration, you will need to reboot. Do not toggle the script on and off, this will start multiple instances of it.
+1. If you change the Krohnkite co nfiguration, you will need to reboot. Do not toggle the script on and off, this will start multiple instances of it.
 2. Delete unused KWin shortcuts you can use any D-Bus program which can invoke D-Bus methods. Service name -`org.kde.kglobalaccel` path - `/component/kwin` method - `org.kde.kglobalaccel.Component.cleanUp`. ArchLinux example:
 
 ```

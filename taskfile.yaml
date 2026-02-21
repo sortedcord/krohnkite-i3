@@ -1,7 +1,7 @@
 version: "3"
 
 vars:
-  PROJECT_NAME: "krohnkite"
+  PROJECT_NAME: "krohnkite-i3"
   PROJECT_VER:
     sh: "git describe --tags --abbrev=0 || echo ''"
   PROJECT_REV:
